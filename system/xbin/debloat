@@ -130,7 +130,7 @@ list_s-app() {
       ProgressBar $x ${#sapp[@]}
       listapp[x]=$SYSTEM2/$type/$i
       if [[ ! -d $MODDIR${listapp[x]} ]]; then
-        if ! grep -xqE -e "(app|priv-app|vendor/app)/${i}" $exclude_file; then
+        if ! grep -xqE -e "(app|priv-app|vendor/app|system_ext/app|system_ext/priv-app)/${i}" $exclude_file; then
           name[x]=${i}
           apk_name[x]="$(basename $(find $SYSTEM/$type/$i -name "*.apk" -type f -mindepth 1))"
           get_app_name ${listapp[x]} $x
@@ -398,6 +398,8 @@ menu() {
   [ -d $SYSTEM/vendor/app ] && echo " 3 - ${W}Vendor Apps${N}"
   [ -d $SYSTEM/product/app ] && echo " 4 - ${W}System Product Apps${N}"
   [ -d $SYSTEM/product/priv-app ] && echo " 5 - ${W}System Product Priv-Apps${N}"
+  [ -d $SYSTEM/system_ext/app ] && echo " 6 - ${W}System Ext Product Apps${N}"
+  [ -d $SYSTEM/system_ext/priv-app ] && echo " 7 - ${W}System Ext Product Priv-Apps${N}"
   echo " c - ${W}Enter Custom System Apps dir${N}"
   $show_rein && {
     echo " r - ${W}Reinstall Uninstalled Apps${N}"
@@ -432,6 +434,16 @@ menu() {
       fi;;
     5)  if [ -d $SYSTEM/product/priv-app ]; then
         menu_list_system_app product/priv-app
+      else
+        abort Invalid
+      fi;;
+    6)  if [ -d $SYSTEM/system_ext/app ]; then
+        menu_list_system_app system_ext/app
+      else
+        abort Invalid
+      fi;;
+    7)  if [ -d $SYSTEM/system_ext/priv-app ]; then
+        menu_list_system_app system_ext/priv-app
       else
         abort Invalid
       fi;;
@@ -472,6 +484,10 @@ case "$1" in
       list_s-app product/app 2>>$LOG
     elif [ "$1" == "product/priv-app" ]; then
       list_s-app product/priv-app 2>>$LOG
+    elif [ "$1" == "system_ext/app" ]; then
+      list_s-app system_ext/app 2>>$LOG
+    elif [ "$1" == "system_ext/priv-app" ]; then
+      list_s-app system_ext/priv-app 2>>$LOG
      else
       abort "$(help_me)"
     fi
@@ -493,7 +509,7 @@ case "$1" in
       exit
     }
     for i in "$@"; do
-      [ -d /data/data/$i ] && DIR_APP=$(dumpsys package $i | grep "path:" | sed 's/.*path: //;s/\(.*\)\/.*/\1/') || DIR_APP=$(find $SYSTEM/app $SYSTEM/priv-app $SYSTEM/vendor/app -name $i -type d -mindepth 1)
+      [ -d /data/data/$i ] && DIR_APP=$(dumpsys package $i | grep "path:" | sed 's/.*path: //;s/\(.*\)\/.*/\1/') || DIR_APP=$(find $SYSTEM/app $SYSTEM/priv-app $SYSTEM/vendor/app $SYSTEM/system_ext/priv-app $SYSTEM/system_ext/app -name $i -type d -mindepth 1)
       [ ! "$DIR_APP" ] && { echo "$i doesn't exist in $SYSTEM"; ok=false; continue; } || {
         [ $(echo $DIR_APP | grep "/system") ] && {
           ok=true
